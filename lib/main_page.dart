@@ -16,7 +16,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
-    futureMovies = apiService.fetchMovies();
+    futureMovies = apiService.fetchPopularMovies();
   }
 
   @override
@@ -26,6 +26,7 @@ class _MainPageState extends State<MainPage> {
         title: const Text('Popular Movies'),
         backgroundColor: Colors.black,
       ),
+
       body: FutureBuilder<List<Movie>>(
         future: futureMovies,
         builder: (context, snapshot) {
@@ -37,23 +38,38 @@ class _MainPageState extends State<MainPage> {
             return const Center(child: Text('No movies found.'));
           } else {
             final movies = snapshot.data!;
+
+            // list view
             return ListView.builder(
               itemCount: movies.length,
               itemBuilder: (context, index) {
                 final movie = movies[index];
+                
+                // list items
                 return Card(
                   margin: const EdgeInsets.all(8),
                   child: ListTile(
-                    leading: Image.network(
-                      'https://image.tmdb.org/t/p/w92${movie.posterPath}',
-                      fit: BoxFit.cover,
-                    ),
-                    title: Text(movie.title),
-                    subtitle: Text(movie.releaseDate),
-                    onTap: () {
-                      // You can navigate to a details page if you want
-                    },
+                  leading: Image.network(
+                    'https://image.tmdb.org/t/p/w92${movie.posterPath}',
+                    fit: BoxFit.cover,
                   ),
+                  title: Text(movie.title),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Release Date: ${movie.releaseDate}'),
+                      Text('⭐Rating: ${movie.voteAverage}'),
+                      Text('Votes: ${movie.voteCount}'),
+                    ],
+                  ),
+                  trailing: Icon(
+                    Icons.favorite_border,
+                    color: Colors.red,
+                  ),
+                  onTap: () {
+                    // Navigate or handle tap
+                  },
+                ),
                 );
               },
             );
