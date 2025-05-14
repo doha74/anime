@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:game_buzz/favorites_page.dart';
 import 'api_service.dart';
 import 'movie.dart';
-import 'movie_detail_screen.dart';  // Import MovieDetailScreen
+import 'movie_detail_screen.dart';  
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -15,7 +16,7 @@ class _MainPageState extends State<MainPage> {
   late Future<List<Movie>> futurePopularMovies;
   late Future<List<Movie>> futureTrendingMovies;
   
-  // Add GlobalKey for Scaffold
+  //this is for controlling the scafold
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -75,11 +76,15 @@ class _MainPageState extends State<MainPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.exit_to_app),
-              title: const Text('Logout'),
+              leading: const Icon(Icons.favorite),
+              title: const Text('Favorite'),
               onTap: () {
-                // Add your logout logic here
-                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FavoritesPage(),
+              ),
+            );
               },
             ),
           ],

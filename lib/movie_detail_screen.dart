@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:game_buzz/provider/favorites_provider.dart';
+import 'package:provider/provider.dart';
 import 'movie.dart';
 
 class MovieDetailScreen extends StatefulWidget {
@@ -12,13 +14,8 @@ class MovieDetailScreen extends StatefulWidget {
 }
 
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
-  bool isFavorite = false; // Track favorite status
+   // Track favorite status
 
-  void toggleFavorite() {
-    setState(() {
-      isFavorite = !isFavorite; // Toggle the favorite status
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +29,19 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? Colors.red : Colors.white,
+              context.watch<FavoritesProvider>().isFavorite(widget.movie.id)
+                  ? Icons.favorite
+                  : Icons.favorite_border,
             ),
-            onPressed: toggleFavorite,
+            onPressed: () {
+              final provider = context.read<FavoritesProvider>();
+              if (provider.isFavorite(widget.movie.id)) {
+                provider.removeFavorite(widget.movie.id);
+              } else {
+                provider.addFavorite(widget.movie); // must be the same structure!
+              }
+            },
+
           ),
         ],
       ),
