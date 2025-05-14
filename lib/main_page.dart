@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'api_service.dart';
 import 'movie.dart';
+import 'movie_detail_screen.dart';  // Import MovieDetailScreen
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -11,70 +12,202 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   final ApiService apiService = ApiService();
-  late Future<List<Movie>> futureMovies;
+  late Future<List<Movie>> futurePopularMovies;
+  late Future<List<Movie>> futureTrendingMovies;
+  
+  // Add GlobalKey for Scaffold
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
-    futureMovies = apiService.fetchPopularMovies();
+    futurePopularMovies = apiService.fetchPopularMovies();
+    futureTrendingMovies = apiService.fetchTrendingMovies();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey, // Set the key for Scaffold
       appBar: AppBar(
-        title: const Text('Popular Movies'),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () {
+            _scaffoldKey.currentState?.openDrawer(); // Open the drawer using the Scaffold key
+          },
+        ),
+        centerTitle: true,
+        title: const Text('Movies'),
         backgroundColor: Colors.black,
       ),
-
-      body: FutureBuilder<List<Movie>>(
-        future: futureMovies,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No movies found.'));
-          } else {
-            final movies = snapshot.data!;
-
-            // list view
-            return ListView.builder(
-              itemCount: movies.length,
-              itemBuilder: (context, index) {
-                final movie = movies[index];
-                
-                // list items
-                return Card(
-                  margin: const EdgeInsets.all(8),
-                  child: ListTile(
-                  leading: Image.network(
-                    'https://image.tmdb.org/t/p/w92${movie.posterPath}',
-                    fit: BoxFit.cover,
-                  ),
-                  title: Text(movie.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Release Date: ${movie.releaseDate}'),
-                      Text('⭐Rating: ${movie.voteAverage}'),
-                      Text('Votes: ${movie.voteCount}'),
-                    ],
-                  ),
-                  trailing: Icon(
-                    Icons.favorite_border,
-                    color: Colors.red,
-                  ),
-                  onTap: () {
-                    // Navigate or handle tap
-                  },
+      
+      // Drawer implementation
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                'Menu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
                 ),
-                );
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                // Add navigation logic here if needed
+                Navigator.pop(context);
               },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('About'),
+              onTap: () {
+                // Add navigation logic here if needed
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Logout'),
+              onTap: () {
+                // Add your logout logic here
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Popular Movies Section
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Popular Movies',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            FutureBuilder<List<Movie>>(
+              future: futurePopularMovies,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No popular movies found.'));
+                } else {
+                  final movies = snapshot.data!;
+                  return SizedBox(
+                    height: 300,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: movies.length,
+                      itemBuilder: (context, index) {
+                        final movie = movies[index];
+                        return movieCard(movie, context);
+                      },
+                    ),
+                  );
+                }
+              },
+            ),
+
+            // Trending Movies Section
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Trending Movies',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            FutureBuilder<List<Movie>>(
+              future: futureTrendingMovies,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No trending movies found.'));
+                } else {
+                  final movies = snapshot.data!;
+                  return SizedBox(
+                    height: 300,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: movies.length,
+                      itemBuilder: (context, index) {
+                        final movie = movies[index];
+                        return movieCard(movie, context);
+                      },
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget movieCard(Movie movie, BuildContext context) {
+    return Container(
+      width: 180,
+      margin: const EdgeInsets.all(8),
+      child: Card(
+        elevation: 4,
+        child: InkWell(
+          onTap: () {
+            // Navigate to the MovieDetailScreen and pass the movie object
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MovieDetailScreen(movie: movie),
+              ),
             );
-          }
-        },
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Image.network(
+                'https://image.tmdb.org/t/p/w342${movie.posterPath}',
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  movie.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text('⭐ ${movie.voteAverage}'),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text('Votes: ${movie.voteCount}'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
